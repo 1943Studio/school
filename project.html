@@ -337,7 +337,7 @@
 <div id="huntArea" class="hunting-zone">
     <div id="numbersField" class="numbers-field"></div>
     <div class="hunting-hud">
-        <div class="counter-box">🔍 trouvés: <span id="foundCounter">0</span> / <span id="totalCounter">10</span></div>
+        <div class="counter-box">🔍 trouvés: <span id="foundCounter">0</span> / <span id="totalCounter">5</span></div>
         <div class="collected-preview" id="miniCollectList"></div>
         <button id="goToComboBtn" class="lock-btn-hunt" disabled>🔐 tenter le cadenas</button>
     </div>
@@ -348,7 +348,7 @@
         <div class="combo-title" id="comboSchoolTitle"></div>
         <div class="slots-area" id="slotsContainer"></div>
         <div class="collected-pool" id="digitsPool"></div>
-        <div id="comboHint" class="hint-mastermind">✨ compose un code de 5 chiffres (parmi ceux récoltés, sans répétition) ✨</div>
+        <div id="comboHint" class="hint-mastermind">✨ compose un code de 3 chiffres (parmi ceux récoltés, sans répétition) ✨</div>
         <div class="combo-actions">
             <button id="submitComboBtn" class="combo-btn">🔓 tester</button>
             <button id="resetComboBtn" class="combo-btn" style="background:#5f5a4a;">⟳ reset</button>
@@ -366,43 +366,43 @@
         4: "renaissance"
     };
     
-    // Chaque école : code secret (5 chiffres SANS RÉPÉTITION) composé UNIQUEMENT de nombres parmi les 10 collectés
+    // Chaque école : code secret (3 chiffres SANS RÉPÉTITION) composé UNIQUEMENT de nombres parmi les 5 collectés
     let schoolSecretCodes = {1: null, 2: null, 3: null, 4: null};
     let hiddenNumbersSet = {1: [], 2: [], 3: [], 4: []};
     let collectedNumbers = {1: [], 2: [], 3: [], 4: []};
     
     let currentSchool = null;
     let currentFloatingElements = [];
-    const TOTAL_TO_FIND = 10;
+    const TOTAL_TO_FIND = 5;       // MODIFIED: 5 numbers to collect instead of 10
+    const CODE_LENGTH = 3;         // MODIFIED: secret code length is 3 digits
     
-    let currentCombo = [null, null, null, null, null];
+    let currentCombo = [null, null, null];
     let lastEvaluation = null;
     
-    // Génère 10 nombres uniques entre 1 et 19
-    function generate10HiddenNumbers() {
+    // Génère 5 nombres uniques entre 1 et 19
+    function generate5HiddenNumbers() {
         let numbers = [];
-        while (numbers.length < 10) {
+        while (numbers.length < TOTAL_TO_FIND) {
             let r = Math.floor(Math.random() * 19) + 1;
             if (!numbers.includes(r)) numbers.push(r);
         }
         return numbers;
     }
     
-    // Génère le code secret : 5 chiffres UNIQUES (sans répétition) choisis aléatoirement PARMI les 10 nombres collectés
+    // Génère le code secret : 3 chiffres UNIQUES (sans répétition) choisis aléatoirement PARMI les 5 nombres collectés
     function generateSecretCodeFromPool(pool) {
-        // pool contient 10 nombres uniques. On en choisit 5 différents.
-        // On mélange le pool et on prend les 5 premiers
+        // pool contient 5 nombres uniques. On en choisit 3 différents sans répétition.
         const shuffled = [...pool];
         for (let i = shuffled.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
-        return shuffled.slice(0, 5);
+        return shuffled.slice(0, CODE_LENGTH);
     }
     
-    // Initialise une école : crée les 10 nombres, puis le code secret (5 chiffres uniques) basé sur ces 10
+    // Initialise une école : crée les 5 nombres, puis le code secret (3 chiffres uniques) basé sur ces 5
     function initSchool(schoolId) {
-        const hidden = generate10HiddenNumbers();
+        const hidden = generate5HiddenNumbers();
         hiddenNumbersSet[schoolId] = hidden;
         schoolSecretCodes[schoolId] = generateSecretCodeFromPool(hidden);
         collectedNumbers[schoolId] = [];
@@ -485,9 +485,9 @@
                 goBtn.style.cursor = "pointer";
                 goBtn.style.color = "black";
             }
-            showHuntMessage("🎉 10 NOMBRES TROUVÉS ! Va au cadenas 🎉");
+            showHuntMessage("🎉 5 NOMBRES TROUVÉS ! Va au cadenas 🎉");
         } else {
-            showHuntMessage(`🔍 +1 trouvé ! (${alreadyCollected.length}/10)`, true);
+            showHuntMessage(`🔍 +1 trouvé ! (${alreadyCollected.length}/${TOTAL_TO_FIND})`, true);
         }
     }
     
@@ -521,7 +521,7 @@
             if (collected.length === 0) {
                 previewDiv.innerHTML = '<span style="color:#bba87a;">aucun</span>';
             } else {
-                previewDiv.innerHTML = collected.slice(0, 8).map(n => `<span class="preview-chip">${n}</span>`).join('') + (collected.length > 8 ? '...' : '');
+                previewDiv.innerHTML = collected.slice(0, 5).map(n => `<span class="preview-chip">${n}</span>`).join('') + (collected.length > 5 ? '...' : '');
             }
         }
     }
@@ -568,7 +568,7 @@
         if (currentSchool === null) return;
         const collected = collectedNumbers[currentSchool];
         if (collected.length !== TOTAL_TO_FIND) {
-            showHuntMessage("Il te manque des nombres ! Continue à chercher les 10 chiffres.");
+            showHuntMessage("Il te manque des nombres ! Continue à chercher les 5 chiffres.");
             return;
         }
         document.getElementById('huntArea').style.display = 'none';
@@ -579,13 +579,13 @@
         
         resetComboSlots();
         renderDigitsPool();
-        document.getElementById('comboHint').innerHTML = "✨ compose un code de 5 chiffres (parmi ceux récoltés, sans répétition) ✨";
+        document.getElementById('comboHint').innerHTML = "✨ compose un code de 3 chiffres (parmi ceux récoltés, sans répétition) ✨";
         document.getElementById('finalWordDisplay').innerHTML = '';
         lastEvaluation = null;
     }
     
     function resetComboSlots() {
-        currentCombo = [null, null, null, null, null];
+        currentCombo = [null, null, null];
         lastEvaluation = null;
         renderSlots();
     }
@@ -593,7 +593,7 @@
     function renderSlots() {
         const container = document.getElementById('slotsContainer');
         container.innerHTML = '';
-        for (let i=0; i<5; i++) {
+        for (let i = 0; i < CODE_LENGTH; i++) {
             const slotDiv = document.createElement('div');
             slotDiv.className = 'combo-slot';
             slotDiv.textContent = currentCombo[i] !== null ? currentCombo[i] : '?';
@@ -660,16 +660,16 @@
     function evaluateGuessWithColors(guess, secret) {
         let sCopy = [...secret];
         let gCopy = [...guess];
-        let result = new Array(5).fill(null);
+        let result = new Array(CODE_LENGTH).fill(null);
         
-        for (let i=0; i<5; i++) {
+        for (let i=0; i<CODE_LENGTH; i++) {
             if (gCopy[i] === sCopy[i]) {
                 result[i] = 'correct';
                 gCopy[i] = null;
                 sCopy[i] = null;
             }
         }
-        for (let i=0; i<5; i++) {
+        for (let i=0; i<CODE_LENGTH; i++) {
             if (gCopy[i] !== null && result[i] !== 'correct') {
                 const idx = sCopy.indexOf(gCopy[i]);
                 if (idx !== -1) {
@@ -682,7 +682,7 @@
                 if (gCopy[i] !== null) result[i] = 'wrong';
             }
         }
-        for (let i=0; i<5; i++) {
+        for (let i=0; i<CODE_LENGTH; i++) {
             if (result[i] === null && gCopy[i] !== null) result[i] = 'wrong';
         }
         
@@ -694,7 +694,7 @@
     function testCombination() {
         if (currentSchool === null) return;
         if (currentCombo.includes(null)) {
-            document.getElementById('comboHint').innerHTML = "❌ tous les 5 emplacements doivent être remplis !";
+            document.getElementById('comboHint').innerHTML = "❌ tous les 3 emplacements doivent être remplis !";
             return;
         }
         
@@ -710,12 +710,12 @@
         
         lastEvaluation = { guess, secret, resultPerSlot };
         
-        if (correctPos === 5) {
+        if (correctPos === CODE_LENGTH) {
             const word = SECRET_WORDS[currentSchool];
             document.getElementById('finalWordDisplay').innerHTML = `🎬 MOT DÉBLOQUÉ : ${word} 🎬`;
             document.getElementById('comboHint').innerHTML = `🎉 PARFAIT ! TU AS TROUVÉ LE MOT "${word}" ! 🎉`;
         } else {
-            document.getElementById('comboHint').innerHTML = `🔎 ${correctPos} bien placé(s) (vert) | ${correctWrongPos} présent(s) mal placé(s) (jaune) | ${5-correctPos-correctWrongPos} incorrect(s) (rouge)`;
+            document.getElementById('comboHint').innerHTML = `🔎 ${correctPos} bien placé(s) (vert) | ${correctWrongPos} présent(s) mal placé(s) (jaune) | ${CODE_LENGTH-correctPos-correctWrongPos} incorrect(s) (rouge)`;
             document.getElementById('finalWordDisplay').innerHTML = '';
         }
         renderSlots();
@@ -768,9 +768,9 @@
     
     const lockImg = document.querySelector('.floating-lock');
     if (lockImg) lockImg.onerror = function() { this.style.display = 'none'; };
-function back(){
-    window.location.reload();
-}
+    function back(){
+        window.location.reload();
+    }
 </script>
 </body>
 </html>
